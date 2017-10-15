@@ -35,7 +35,7 @@ class Graph:
     def one_indices(self, vertex):
         result = []
         for i in range(len(self.adj_matrix[vertex])):
-            if self.adj_matrix[vertex][i] == 1 and not self.already_seen.__contains__((vertex, i)):
+            if self.adj_matrix[vertex][i] == 1 and (vertex, i) not in self.already_seen:
                 result.append(i)
         return result
 
