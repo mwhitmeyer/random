@@ -1,10 +1,17 @@
 import random
 import numpy as np
+import time
+
+current_milli_time = lambda: int(round(time.time() * 1000))
 
 
 class Graph:
 
-
+    """
+    This is a general class for adjacency matrices. Ones indicate there is an edge, while zeros
+    indicate there is no connection between to vertices. This class and its methods are only
+    equipped to handle undirected graphs.
+    """
     def __init__(self, adj_matrix):
         self.adj_matrix = adj_matrix
         self.already_seen = []
@@ -33,6 +40,11 @@ class Graph:
         self.adj_matrix[v2][v1] = 0
 
     def one_indices(self, vertex):
+        """
+        Returns a list of indices where there's a one (a connection) for a particular vertex.
+        :param vertex:
+        :return:
+        """
         result = []
         for i in range(len(self.adj_matrix[vertex])):
             if self.adj_matrix[vertex][i] == 1 and (vertex, i) not in self.already_seen:
@@ -40,6 +52,11 @@ class Graph:
         return result
 
     def random_one(self, vertex):
+        """
+        Returns a random index where theres a one (aka where there's a connection)
+        :param vertex:
+        :return:
+        """
         ones = self.one_indices(vertex)
         if not ones:
             return ones
@@ -54,6 +71,13 @@ class Graph:
         self.reset_alreadyseen()
 
     def find_tour(self, vertex):
+        """
+        Starts at a vertex, and walks a random path. Only stops when it gets stuck. Note
+        that if the graph is connected and of even degree, then it will always get stuck at
+        the vertex which it started.
+        :param vertex:
+        :return:
+        """
         result = []
         curr_vertex = vertex
         rand_idx = self.random_one(curr_vertex) #random index of a one in this vertex's row in adj_matrix that isn't in already_seen
@@ -67,6 +91,11 @@ class Graph:
         return result
 
     def is_lone_vertex(self, vertex):
+        """
+        Returns true iff the vertex is not connected to any other vertices
+        :param vertex:
+        :return:
+        """
         for k in self.adj_matrix[vertex]:
             if k != 0:
                 return False
@@ -75,12 +104,18 @@ class Graph:
 
 
     def splice(self, tour1, tour2):
+        """
+        Takes tour1, and inserts tour2 into it at the correct place.
+        :param tour1:
+        :param tour2:
+        :return:
+        """
         node_to_splice = tour2[0][0]
         k = 0
         curr_vertex = tour1[k][0]
-        while curr_vertex != node_to_splice:
-            k+=1
+        while curr_vertex != node_to_splice and k < len(tour1):
             curr_vertex = tour1[k][0]
+            k+=1
 
         for item in tour2[::-1]:
             tour1.insert(k, item)
@@ -91,40 +126,66 @@ class Graph:
 
     def euler(self, vertex):
 
+        """
+        Computes an Eulerian Tour of a graph if it has one.
+        :param vertex:
+        :return: A list of two elements tuples, which contain two vertices. These describe
+        the edges to traverse.
+        """
+
         tour1 = self.find_tour(vertex)
         copy = tour1.copy()
 
         for edge in copy:
 
-            if not self.is_lone_vertex(edge[1]):
-                tour2 = self.euler(edge[1])
+            if not self.is_lone_vertex(edge[0]):
+                tour2 = self.euler(edge[0])
                 tour1 = self.splice(tour1, tour2)
 
 
         return tour1
 
     def find_euler_tour(self, vertex):
+        """
+        Call this function if you want to find the eulerian tour. It will compute it, but then
+        reset the graph so you can call it again.
+        :param vertex:
+        :return:
+        """
+        init = current_milli_time()
         assert self.has_eulerian_tour(), "Graph must be connected and every vertex must have even degree"
         tour = self.euler(vertex)
         self.reset()
+        final = current_milli_time()
+        print('Time taken in milliseconds: ' + str(final-init))
         return tour
 
     def is_planar(self):
+        """
+        Not implemented yet.
+        :return:
+        """
+        return
+
+    def num_edges(self):
+        """
+        calculates the number of edges in self. Not implemented yet.
+        :return:
+        """
         return
 
 
-
-g = Graph([[0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-           [1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-           [1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
-           [1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
-           [1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1],
-           [1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
-           [1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1],
-           [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
-           [1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1],
-           [1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1],
-           [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0]])
+g = Graph([[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+           [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+           [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+           [0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0],
+           [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+           [0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+           [0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0],
+           [0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0],
+           [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+           [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+           [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]])
 
 big_g = np.eye(51)
 big_g[big_g == 0] = 1
@@ -138,11 +199,15 @@ for i in range(len(fat_g)):
     fat_g[i][i] = 0
 fat_g = Graph(fat_g)
 
-def sum_fact(n):
-    total = 0
-    while n > 0:
-        total += n
-        n -= 1
-    return total
+barely = Graph(np.eye(100))
+barely.adj_matrix[barely.adj_matrix == 1] = 0
+for k in range(0, 99):
+    barely.add_edge(k, k+1)
+barely.add_edge(0, 99)
+
+
+
+
+
 
 
